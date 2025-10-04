@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>School games</title>
+  <link rel="icon" type="image/png" href="icons.png">
+    <link rel="icon" type="image/x-icon" href="icons.ico">
+  <style>
+    .crit-popup {
+  position: absolute;
+  pointer-events: none;
+  width: 666px; /* adjust to your image */
+  height: 375px;
+  transform: translate(-50%, -50%) scale(1);
+  transition: transform 0.5s ease-out, opacity 0.5s ease-out;
+  z-index: 9999;
+  opacity: 1;
+}
+
+
+    body {
+    
+      font-family: Arial, sans-serif;
+      background: #f0f0f0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 30px;
+      margin: 0;
+      padding: 20px;
+    }
+    .bottom-right-img {
+  position: fixed;
+  bottom: 10px;  /* distance from bottom */
+  right: 10px;   /* distance from right */
+  z-index: 9999;
+  opacity: 0.8;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.bottom-right-img img {
+  width: 80px;   /* adjust size */
+  height: auto;
+  border-radius: 8px; /* optional rounding */
+}
+
+.bottom-right-img:hover {
+  opacity: 1;
+  transform: scale(1.05);
+}
+
+    /* Main game section */
+    #game {
+      flex: 1;
+      text-align: center;
+    }
+
+    #clickButton, #UpgradeButton, #auto {
+      padding: 20px 40px;
+      font-size: 24px;
+      cursor: pointer;
+      border: none;
+      border-radius: 10px;
+      color: white;
+      margin: 10px;
+      transition: transform 0.1s;
+    }
+
+    #clickButton { background-color: #4CAF50; }
+    #UpgradeButton { background-color: #a9b414; }
+    #auto { background-color: #af514c; }
+
+    #clickButton:active,
+    #UpgradeButton:active,
+    #auto:active {
+      transform: scale(0.95);
+    }
+
+    #score {
+      font-size: 32px;
+      margin-top: 30px;
+    }
+
+    /* Shop panel */
+    #shop {
+      width: 250px;
+      max-height: 500px;
+      overflow-y: auto;
+      background: white;
+      padding: 15px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    .shop-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 15px;
+      padding: 10px;
+      border-radius: 10px;
+      background: #ececec;
+    }
+
+    .shop-item button {
+      margin-top: 8px;
+      padding: 10px 20px;
+      font-size: 16px;
+      border: none;
+      border-radius: 8px;
+      background: #333;
+      color: white;
+      cursor: pointer;
+    }
+    
+    .shop-item button:hover {
+      background: #555;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="game">
+    <h1>jaxon Clicker</h1>
+    <button id="clickButton">Click Me now or else...</button>
+    <div id="score">Score: 0</div>
+    <div id="upgrades">Upgrades: 0</div>
+    <div id="autocick">Autoclickers: 0</div>
+  </div>
+
+  <div id="shop">
+    <h2>Shop</h2>
+    <div class="shop-item">
+      <span>+1 Upgrade</span>
+      <button id="UpgradeButton">Buy (100)</button>
+    </div>
+    <div class="shop-item">
+      <span>Autoclicker</span>
+      <button id="auto">Buy (500)</button>
+    </div>
+    <!-- You can add more items here -->
+    <div class="shop-item">
+      <span>Critical Chance</span>
+      <button id="crit">Buy (1000)</button>
+    </div>
+  </div>
+
+  <!-- Sounds -->
+  <audio id="clickMaster" src="balls.mp3" preload="auto"></audio>
+  <audio id="criticalsfx" src="crit.mp3" preload="auto"></audio>
+
+  <!-- Confetti library -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+  <script>
+    let score = 0;
+    let upgrades = 0;
+    let cost = 100;
+    let autoclickercost = 500;
+    let autoclicker = 0;
+    
+    const button = document.getElementById('clickButton');
+    const upgradething = document.getElementById('UpgradeButton');
+    let critLevel = 0;          // player's crit upgrades
+    let criticalcost = 1000;    // base cost
+
+
+
+    const critBtn = document.getElementById('crit'); // button element
+    const scoreDisplay = document.getElementById('score');
+    const upgradedisplay = document.getElementById('upgrades');
+    const autoBtn = document.getElementById('auto');
+    const autoclickDisplay = document.getElementById('autocick');
+
+    function playSound(masterId) {
+      const master = document.getElementById(masterId);
+      const sound = master.cloneNode();
+      sound.play();
+    }
+
+    // Manual clicks
+    button.addEventListener('click', (e) => {
+      max = 100
+       let randomInt = Math.floor(Math.random() * max) + 1;
+       if (critLevel >= randomInt){
+        
+        score += ((1 + upgrades) * 99);
+        playSound("criticalsfx")
+        showCritPopup(e.clientX, e.clientY)
+       }
+       score += (1 + upgrades);
+      
+      updateDisplay();
+      playSound("clickMaster");
+      
+      confetti({
+        particleCount: 2,
+        spread: 70,
+        origin: { y: 0.6 }
+      });
+    });
+
+    // Upgrades >:)))))))
+    upgradething.addEventListener('click', () => {
+      const price = upgrades * 2 + cost;
+      if (score >= price) {
+        score -= price;
+        upgrades++;
+        updateDisplay();
+        playSound("clickMaster");
+        confetti({ particleCount: 100, spread: 120, origin: { y: 0.6 } });
+      }
+    });
+    //crit chance sigma skibidi
+    critBtn.addEventListener('click', () => {
+      const criticalcos = upgrades * 2 + criticalcost;
+      if (score >= criticalcos) {
+        score -= criticalcos;
+        critLevel++;
+        updateDisplay();
+        playSound("clickMaster");
+        confetti({ particleCount: 100, spread: 120, origin: { y: 0.6 } });
+      }
+    });
+    // Autoclickers just kidding im not brainrot ignore crit chance trust me 
+    autoBtn.addEventListener('click', () => {
+      if (score >= autoclickercost) {
+        score -= autoclickercost;
+        autoclicker++;
+        autoclickercost += 250 + autoclicker * 10;
+        autoBtn.textContent = `Buy (${autoclickercost})`;
+        updateDisplay();
+
+        playSound("clickMaster");
+        confetti({ particleCount: 200, spread: 120, origin: { y: 0.6 } });
+      }
+    });
+
+    // Auto loop
+    setInterval(() => {
+      if (autoclicker > 0) {
+        score += autoclicker * (1 + upgrades);
+        updateDisplay();
+      }
+    }, 1000);
+
+    function updateDisplay() {
+      scoreDisplay.textContent = 'Score: ' + score;
+      upgradedisplay.textContent = 'Upgrades: ' + upgrades;
+      autoclickDisplay.textContent = 'Autoclickers: ' + autoclicker;
+    }
+    function showCritPopup(x, y) {
+  const img = document.createElement('img');
+  img.src = 'crit.png'; // 👈 your crit image
+  img.className = 'crit-popup';
+  img.style.left = x + 'px';
+  img.style.top = y + 'px';
+  document.body.appendChild(img);
+
+  // Start big, then shrink + fade
+  requestAnimationFrame(() => {
+    img.style.transform = 'translate(-50%, -50%) scale(0.5)';
+    img.style.opacity = 0;
+  });
+
+  setTimeout(() => {
+    img.remove();
+  }, 500); // remove after animation
+}
+
+
+  </script>
+  <a href="https://yourlink.com" target="_blank" class="bottom-right-img">
+    <img src="website logo.png" alt="Logo">
+  </a>
+  
+</body>
+</html>
